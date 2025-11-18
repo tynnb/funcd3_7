@@ -19,9 +19,6 @@ typedef struct {
 typedef enum {
     SUCCESS = 0,
     ERROR_INVALID_COMMAND,
-    ERROR_VARIABLE_NOT_INITIALIZED,
-    ERROR_DIVISION_BY_ZERO,
-    ERROR_INVALID_EXPRESSION,
     ERROR_FILE_OPEN,
     ERROR_NULL_POINTER
 } StatusCode;
@@ -39,5 +36,7 @@ StatusCode process_assignment(const char* command);
 StatusCode process_print(const char* command);
 int parse_value(const char** expr);
 int parse_term(const char** expr);
+int parse_factor(const char** expr);
+int parse_power(const char** expr);
 
 #endif

@@ -22,7 +22,7 @@ int get_index(char name) {
 
 StatusCode log_operations(const char* command, const char* operation) {
     if (log_file == NULL) {
-        log_file = fopen(LOG_FILE, "a");
+        log_file = fopen(LOG_FILE, "w");
         if (log_file == NULL) {
             return ERROR_FILE_OPEN;
         }
@@ -73,7 +73,7 @@ int parse_value(const char** expr) {
 }
 
 int parse_term(const char** expr) {
-    int result = parse_value(expr);
+    int result = parse_power(expr);
 
     while (1) {
         while (**expr == ' ') {
@@ -86,7 +86,7 @@ int parse_term(const char** expr) {
         }
         (*expr)++;
 
-        int right = parse_value(expr);
+        int right = parse_power(expr);
 
         switch (op) {
             case '*':
@@ -141,7 +141,7 @@ StatusCode process_command(const char* command) {
     }
 
     if (strncmp(command, "print", 5) == 0) {
-        process_print(command);
+        return process_print(command);
     }
     else if (*command >= 'A' && *command <= 'Z') {
         const char* temp = command + 1;
@@ -149,7 +149,7 @@ StatusCode process_command(const char* command) {
             temp++;
         }
         if (*temp == '=') {
-            process_assignment(command);
+            return process_assignment(command);
         }
         else {
             return ERROR_INVALID_COMMAND;
@@ -165,22 +165,49 @@ StatusCode process_assignment(const char* command) {
     int var_index = get_index(var_name);
 
     const char* expr = command + 1;
-    while (*expr == ' ') {
-        expr++;
-    }
+    while (*expr == ' ') expr++;
+    
     if (*expr != '=') {
         return ERROR_INVALID_COMMAND;
     }
     expr++;
-    while (*expr == ' ') {
-        expr++;
-    }
+    
+    while (*expr == ' ') expr++;
+    
     int value = parse_expression(&expr);
 
     variables[var_index].value = value;
     variables[var_index].initialized = 1;
 
-    log_operations(command, "Assignment");
+    // Анализируем исходную команду для определения типа
+    const char* operation_type = "Assignment";
+    
+    // Если после '=' есть что-то кроме пробелов и это не просто число/переменная
+    const char* after_equals = strchr(command, '=');
+    if (after_equals) {
+        after_equals++; // пропускаем '='
+        int has_operations = 0;
+        int has_non_space = 0;
+        
+        while (*after_equals != '\0') {
+            if (*after_equals != ' ') {
+                has_non_space++;
+                if (*after_equals == '+' || *after_equals == '-' || 
+                    *after_equals == '*' || *after_equals == '/' || 
+                    *after_equals == '^') {
+                    has_operations = 1;
+                    break;
+                }
+            }
+            after_equals++;
+        }
+        
+        if (has_operations && has_non_space > 1) {
+            operation_type = "Arithmetic operation";
+        }
+    }
+
+    return log_operations(command, operation_type);
 }
 
 StatusCode process_print(const char* command) {
@@ -199,5 +226,41 @@ StatusCode process_print(const char* command) {
     }
 
     printf("%d\n", value);
-    log_operations(command, "Print");
+    return log_operations(command, "Print");
+}
+
+int parse_factor(const char** expr) {
+    while (**expr == ' ') {
+        (*expr)++;
+    }
+    
+    if (**expr == '(') {
+        (*expr)++;
+        int result = parse_expression(expr);
+        while (**expr == ' ') {
+            (*expr)++;
+        }
+        if (**expr == ')') {
+            (*expr)++;
+        }
+        return result;
+    }
+    
+    return parse_value(expr);
+}
+
+int parse_power(const char** expr) {
+    int result = parse_factor(expr);
+    
+    while (1) {
+        while (**expr == ' ') (*expr)++;
+        
+        char op = **expr;
+        if (op != '^') break;
+        
+        (*expr)++;
+        int right = parse_factor(expr);
+        result = (int)pow(result, right);
+    }
+    return result;
 }
