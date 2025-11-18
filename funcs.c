@@ -179,13 +179,11 @@ StatusCode process_assignment(const char* command) {
     variables[var_index].value = value;
     variables[var_index].initialized = 1;
 
-    // Анализируем исходную команду для определения типа
     const char* operation_type = "Assignment";
     
-    // Если после '=' есть что-то кроме пробелов и это не просто число/переменная
     const char* after_equals = strchr(command, '=');
     if (after_equals) {
-        after_equals++; // пропускаем '='
+        after_equals++;
         int has_operations = 0;
         int has_non_space = 0;
         
