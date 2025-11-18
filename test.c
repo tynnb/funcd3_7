@@ -152,7 +152,6 @@ void test_process_print() {
     variables[0].value = 42;
     variables[0].initialized = 1;
     
-    // Тестируем вывод - можно проверить через перехват stdout
     StatusCode status = process_print("print(A)");
     assert(status == SUCCESS);
     
@@ -172,19 +171,15 @@ void test_process_command() {
     assert(variables[23].value == 10);
     assert(variables[23].initialized == 1);
     
-    // ОТЛАДКА: проверим значение X
-    printf("DEBUG: X = %d, initialized = %d\n", variables[23].value, variables[23].initialized);
-    
     StatusCode status2 = process_command("print(X)");
     assert(status2 == SUCCESS);
     
     StatusCode status3 = process_command("invalid command");
     assert(status3 == ERROR_INVALID_COMMAND);
     
-    // ОТЛАДКА: перед проблемной строкой
     printf("DEBUG: Before Y = X * 2 + 1\n");
     StatusCode status4 = process_command("Y = X * 2 + 1");
-    printf("DEBUG: status4 = %d\n", status4);  // какой статус возвращается?
+    printf("DEBUG: status4 = %d\n", status4);
     printf("DEBUG: Y value = %d, initialized = %d\n", variables[24].value, variables[24].initialized);
     assert(status4 == SUCCESS);
     assert(variables[24].value == 21);
@@ -206,7 +201,6 @@ void test_variable_scope() {
     assert(variables[1].value == 10);
     assert(variables[2].value == 15);
     
-    // Проверяем, что другие переменные не инициализированы
     assert(variables[3].initialized == 0);
     assert(variables[25].initialized == 0);
     
@@ -218,23 +212,15 @@ void test_error_handling() {
     
     initialization_variables();
     
-    // Деление на ноль
-    //const char* expr1 = "5 / 0";
-    //const char* ptr1 = expr1;
-    //int result1 = parse_expression(&ptr1);
-    // Проверяем что не упало и вернуло 0 или специальное значение
-    
-    // Неинициализированная переменная
     const char* expr2 = "Z";
     const char* ptr2 = expr2;
     int result2 = parse_value(&ptr2);
     assert(result2 == 0);
     
-    // Неправильная команда
-    StatusCode status1 = process_command("A 5"); // нет '='
+    StatusCode status1 = process_command("A 5");
     assert(status1 == ERROR_INVALID_COMMAND);
     
-    StatusCode status2 = process_command("print A"); // нет скобок
+    StatusCode status2 = process_command("print A");
     assert(status2 == ERROR_INVALID_COMMAND);
     
     printf("error handling tests passed!\n");
@@ -251,12 +237,12 @@ void test_complex_expressions() {
     const char* expr1 = "A + B * C ^ 2";
     const char* ptr1 = expr1;
     int result1 = parse_expression(&ptr1);
-    assert(result1 == 50); // 2 + 3 * 16 = 2 + 48 = 50
+    assert(result1 == 50);
     
     const char* expr2 = "(A + B) * C";
     const char* ptr2 = expr2;
     int result2 = parse_expression(&ptr2);
-    assert(result2 == 20); // (2 + 3) * 4 = 5 * 4 = 20
+    assert(result2 == 20);
     
     printf("complex expressions tests passed!\n");
 }
