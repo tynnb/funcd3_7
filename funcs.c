@@ -20,9 +20,12 @@ int get_index(char name) {
     }
 }
 
-void log_operations(const char* command, const char* operation) {
+StatusCode log_operations(const char* command, const char* operation) {
     if (log_file == NULL) {
         log_file = fopen(LOG_FILE, "a");
+        if (log_file == NULL) {
+            return ERROR_FILE_OPEN;
+        }
     }
     fprintf(log_file, "[%d] %s | ", string_number, command);
 
@@ -38,6 +41,7 @@ void log_operations(const char* command, const char* operation) {
     }
     fprintf(log_file, " | %s\n", operation);
     fflush(log_file);
+    return SUCCESS;
 }
 
 int parse_value(const char** expr) {
@@ -129,7 +133,7 @@ int parse_expression(const char** expr) {
     return result;
 }
 
-void process_command(const char* command) {
+StatusCode process_command(const char* command) {
     string_number++;
 
     while (*command == ' ') {
@@ -147,10 +151,16 @@ void process_command(const char* command) {
         if (*temp == '=') {
             process_assignment(command);
         }
+        else {
+            return ERROR_INVALID_COMMAND;
+        }
+    }
+    else {
+        return ERROR_INVALID_COMMAND;
     }
 }
 
-void process_assignment(const char* command) {
+StatusCode process_assignment(const char* command) {
     char var_name = *command;
     int var_index = get_index(var_name);
 
@@ -159,7 +169,7 @@ void process_assignment(const char* command) {
         expr++;
     }
     if (*expr != '=') {
-        return;
+        return ERROR_INVALID_COMMAND;
     }
     expr++;
     while (*expr == ' ') {
@@ -173,11 +183,11 @@ void process_assignment(const char* command) {
     log_operations(command, "Assignment");
 }
 
-void process_print(const char* command) {
+StatusCode process_print(const char* command) {
     const char* expr = command + 5;
     while (*expr == ' ') expr++;
     if (*expr != '(') {
-        return;
+        return ERROR_INVALID_COMMAND;
     }
 
     expr++;
@@ -185,7 +195,7 @@ void process_print(const char* command) {
 
     while (*expr == ' ') expr++;
     if (*expr != ')') {
-        return;
+        return ERROR_INVALID_COMMAND;
     }
 
     printf("%d\n", value);
